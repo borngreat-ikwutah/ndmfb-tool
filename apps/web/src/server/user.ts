@@ -7,11 +7,15 @@ export type CurrentUser = { id: string; name: string; email: string; image?: str
 const apiURL = process.env.API_URL || "http://localhost:8080";
 
 export const getCurrentUser = createServerFn({ method: "GET" }).handler(async () => {
+  try {
     const response = await fetch(`${apiURL}/api/auth/get-session`, {
       headers: { cookie: getRequestHeaders().get("cookie") || "" },
     });
-  if (!response.ok) return null;
-  return (await response.json()) as CurrentUser;
+    if (!response.ok) return null;
+    return (await response.json()) as CurrentUser;
+  } catch {
+    return null;
+  }
 });
 
 export const currentUserOptions = (userId?: string) =>

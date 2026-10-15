@@ -1,7 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { getCurrentUser } from "~/server/user";
 import { createPageMeta } from "~/seo";
 
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    const user = await getCurrentUser();
+    if (!user) {
+      throw redirect({ to: "/sign-in" });
+    }
+    return { user };
+  },
   head: () =>
     createPageMeta({
       title: "Home",

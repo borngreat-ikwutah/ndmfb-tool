@@ -1,12 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { AuthPage } from "~/features/auth/login";
-import { createPageMeta } from "~/seo";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/login")({
-  head: () =>
-    createPageMeta({
-      title: "Sign In",
-      description: "Sign in to NDMFB Tool",
-    }),
-  component: AuthPage,
+  beforeLoad: () => {
+    throw redirect({ to: "/sign-in" });
+  },
 });
