@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+
+echo "Building web app"
+bun run web:build
+
+echo "Running API tests"
+cd apps/api && go test ./...

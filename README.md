@@ -1,21 +1,21 @@
-# shadcn/ui monorepo template
+# NDMFB Tool
 
-This is a TanStack Start monorepo template with shadcn/ui.
+This repository is a Bun and Go monorepo.
 
-## Adding components
+## Workspaces
 
-To add components to your app, run the following command at the root of your `web` app:
+- `apps/web` contains the existing React and TanStack Start application.
+- `apps/api` contains the Go HTTP API.
+
+The Go API is the only workspace allowed to connect to PostgreSQL or run migrations. It uses MVC structure under `apps/api/internal`.
+
+## Getting started
 
 ```bash
-pnpm dlx shadcn@latest add button -c apps/web
+bun install
+bun run prepare
+bun run dev       # web app on http://localhost:3000
+bun run api:dev   # API on http://localhost:8080
 ```
 
-This will place the ui components in the `packages/ui/src/components` directory.
-
-## Using components
-
-To use the components in your app, import them from the `ui` package.
-
-```tsx
-import { Button } from "@workspace/ui/components/button";
-```
+Run `bun run check` before opening a pull request. The hooks run the same checks automatically for commits and production web builds before pushes.

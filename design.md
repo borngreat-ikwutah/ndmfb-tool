@@ -1,118 +1,170 @@
-# Design System Specification (`design.md`)
+# Cenpact Design System Specification
 
-This document specifies the visual design principles, semantic token mappings, typography rules, and component guidelines for the **ndmfb-tool** monorepo.
-
-Token implementations and CSS variables are located in [`packages/ui/src/styles/globals.css`](file:///home/borngreat/Desktop/projects/ndmfb-tool/packages/ui/src/styles/globals.css).
+> **Cenpact** (Cencori + Compact) — A developer-first, high-density design system prioritizing information density, subtle sophistication, and dark-mode native elegance.
 
 ---
 
-## 1. Core Visual Principles
+## 1. Core Principles
 
-- **Function-Driven Minimalism**: Restraint over decorative clutter. Every pixel and component serves a clear functional purpose.
-- **Perceptually Uniform Color (OKLCH)**: High contrast, accessible color ramps calculated in OKLCH for consistent perceptual lightness across light and dark modes.
-- **Mathematical Radius Hierarchy**: Proportional rounding derived from a single `--radius` token, avoiding mismatched corners.
-- **Harmonious Typography**: Clear typographic hierarchy using Google variable fonts (*DM Sans* and *Noto Sans*).
+### 1.1 Dense but Breathable
+- **Rule**: Pack information tightly inside components while keeping clean macro-margins between page sections.
+- **Do**:
+  - Tight internal padding (`p-4`, `p-5`) and small gaps (`gap-2.5`, `gap-3`).
+  - Rely on visual weight, typography, and hair-thin borders for hierarchy rather than excessive blank space.
+  - Maintain generous margins between major page sections (`space-y-8`, `space-y-12`).
+- **Don't**:
+  - Cram items without rhythm or uniform hierarchy.
+  - Sacrifice typography legibility or touch target ergonomics for artificial density.
 
----
+### 1.2 Subtle Sophistication
+- **Rule**: Content takes center stage; UI chrome remains understated, quiet, and refined.
+- **Do**:
+  - Soft borders using semantic tokens (`border border-border/40` or `border-border/50`).
+  - Muted surfaces (`bg-card/50`, `bg-muted/30`, `backdrop-blur`).
+  - Subtle hover feedback that confirms intent without bright, distracting flashes.
+- **Don't**:
+  - High-contrast neon borders or loud background gradients.
+  - Unnecessary decorative animations or transitions longer than `150ms-200ms`.
 
-## 2. Design Tokens & Color Palettes
+### 1.3 Developer-First & Power-User Centric
+- **Rule**: Prioritize speed, density, and discoverability for power users.
+- **Do**:
+  - Always expose technical identifiers (IDs, hashes, ISO timestamps, statuses) in monospace (`font-mono text-xs text-muted-foreground`).
+  - Inline one-click copy buttons for keys, IDs, and endpoints.
+  - Keyboard shortcuts (`<kbd>` hints) and fast-action command menus.
+  - Prefer responsive single-screen tables/dashboards over multi-step wizards.
+- **Don't**:
+  - Hide critical data behind multi-layer drill-downs or modal labyrinths.
+  - Force sequential wizard steps when a structured form row layout suffices.
 
-All colors are defined as OKLCH CSS variables in `:root` (Light Mode) and `.dark` (Dark Mode).
-
-### 2.1 Surfaces & Canvas
-
-| Token | CSS Variable | Light Mode (OKLCH) | Dark Mode (OKLCH) | Semantic Usage |
-|---|---|---|---|---|
-| Background | `--background` | `oklch(1 0 0)` (#FFF) | `oklch(0.145 0 0)` | Primary application background |
-| Foreground | `--foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | Primary body text and icons |
-| Card | `--card` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | Elevated surfaces and containers |
-| Card Foreground | `--card-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | Text and content inside cards |
-| Popover | `--popover` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | Dropdowns, menus, tooltips |
-| Popover Foreground | `--popover-foreground`| `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | Text inside popovers |
-
-### 2.2 Interactive & Brand Colors
-
-| Token | CSS Variable | Light Mode (OKLCH) | Dark Mode (OKLCH) | Semantic Usage |
-|---|---|---|---|---|
-| Primary | `--primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` | Key call-to-action buttons & highlights |
-| Primary Foreground | `--primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | Text on primary elements |
-| Secondary | `--secondary` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | Secondary buttons and subtle badges |
-| Secondary Foreground | `--secondary-foreground`| `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | Text on secondary elements |
-| Accent | `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | Hover highlights and interactive accents |
-| Accent Foreground | `--accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | Text on accent elements |
-| Destructive | `--destructive` | `oklch(0.577 0.245 27.325)` | `oklch(0.704 0.191 22.216)` | Error states, dangerous actions |
-
-### 2.3 Form & Utility Tokens
-
-| Token | CSS Variable | Light Mode | Dark Mode | Semantic Usage |
-|---|---|---|---|---|
-| Border | `--border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | Subtle borders on cards and dividers |
-| Input | `--input` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 15%)` | Input and control element borders |
-| Ring | `--ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | Focus visible rings |
-| Muted | `--muted` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | Muted background fills |
-| Muted Foreground | `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` | Secondary/supporting text |
-
-### 2.4 Sidebar Tokens
-
-| Token | CSS Variable | Light Mode | Dark Mode | Semantic Usage |
-|---|---|---|---|---|
-| Sidebar Surface | `--sidebar` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | Sidebar background |
-| Sidebar Text | `--sidebar-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | Sidebar navigation text |
-| Sidebar Active | `--sidebar-primary` | `oklch(0.205 0 0)` | `oklch(0.488 0.243 264.376)` | Active item highlight |
-| Sidebar Border | `--sidebar-border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | Sidebar divider line |
+### 1.4 Dark Mode Native
+- **Rule**: Built and tuned dark-first, then adapted cleanly for light themes.
+- **Do**:
+  - Use semantic HSL/OKLCH color variables exclusively (`bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`).
+  - Keep low-saturation card fills with crisp 1px borders in dark mode.
+- **Don't**:
+  - Hardcode raw hex codes (`#000000`, `#ffffff`).
+  - Treat dark mode as an inverted afterthought.
 
 ---
 
-## 3. Typography Hierarchy
+## 2. Color System & Semantic Tokens
 
-Fonts are loaded from `@fontsource-variable` packages and assigned via `@theme inline`:
+| Token | Light Theme | Dark Theme | Purpose |
+| :--- | :--- | :--- | :--- |
+| `background` | `hsl(0 0% 100%)` | `hsl(240 10% 3.9%)` | Root page background |
+| `foreground` | `hsl(240 10% 3.9%)` | `hsl(0 0% 98%)` | Primary text |
+| `card` | `hsl(0 0% 100%)` | `hsl(240 10% 5%)` | Containers, card surfaces |
+| `border` | `hsl(240 5.9% 90%)` | `hsl(240 3.7% 15.9%)` | Dividers & outlines (`border-border/40`) |
+| `muted` | `hsl(240 4.8% 95.9%)` | `hsl(240 3.7% 12%)` | Subtle pill fills, code blocks |
+| `muted-foreground`| `hsl(240 3.8% 46.1%)` | `hsl(240 5% 64.9%)` | Secondary text, hints, captions |
+| `primary` | `hsl(240 5.9% 10%)` | `hsl(0 0% 98%)` | Primary CTAs |
+| `destructive` | `hsl(0 84.2% 60.2%)` | `hsl(0 62.8% 30.6%)` | Errors, warnings, destructive triggers |
 
-- **Sans / Body Font (`--font-sans`)**: `'DM Sans Variable', sans-serif`
-- **Heading / Display Font (`--font-heading`)**: `'Noto Sans Variable', sans-serif`
-
-| Level | Font Weight | Line Height | Tracking | Semantic Usage |
-|---|---|---|---|---|
-| Display / H1 | 600–700 | 1.15 | `-0.025em` | Hero headlines and primary page headers |
-| H2 | 600 | 1.25 | `-0.02em` | Section headers |
-| H3 | 600 | 1.35 | `-0.015em` | Card and modal titles |
-| Body (Default) | 400 | 1.5–1.6 | `0` | Standard paragraph text (`text-sm` / `text-base`) |
-| Caption / Small | 400–500 | 1.4 | `+0.01em` | Form labels, helper text, badges |
-| Code / Mono | 400 | 1.4 | `0` | Code blocks, API values, IDs |
-
----
-
-## 4. Proportional Border Radius Scale
-
-All radius tokens scale proportionally from the base token `--radius: 0.5rem` (8px):
-
-| Token | Tailwind Class | Formula | Resolved Value (`--radius: 0.5rem`) | Intended Component Usage |
-|---|---|---|---|---|
-| `--radius-sm` | `rounded-sm` | `calc(var(--radius) - 4px)` | **4px** | Badges, tags, small inner controls |
-| `--radius-md` | `rounded-md` | `calc(var(--radius) - 2px)` | **6px** | Standard buttons, inputs, selects, dropdown items |
-| `--radius-lg` | `rounded-lg` | `var(--radius)` | **8px** | Medium cards, dialogs, popovers |
-| `--radius-xl` | `rounded-xl` | `calc(var(--radius) + 4px)` | **12px** | Outer card containers, modals |
-| `--radius-2xl` | `rounded-2xl` | `calc(var(--radius) + 8px)` | **16px** | Large dashboards / Bento containers |
-| `--radius-3xl` | `rounded-3xl` | `calc(var(--radius) + 12px)`| **20px** | Hero sections, highlighted cards |
-| `--radius-4xl` | `rounded-4xl` | `calc(var(--radius) + 16px)`| **24px** | Outer app wrappers |
-| `rounded-full` | `rounded-full`| `9999px` | **Full Pill** | Avatars, pills, status dots |
+### Status Accents (10% Alpha Backgrounds)
+- **Success / Connected**: `bg-emerald-500/10 text-emerald-500`
+- **Warning / Pending**: `bg-amber-500/10 text-amber-500`
+- **Error / Danger**: `bg-red-500/10 text-red-500`
+- **Info / Blue**: `bg-blue-500/10 text-blue-500`
 
 ---
 
-## 5. Component Construction Guidelines
+## 3. Typography Scale
 
-### 5.1 Buttons (`Button`)
-- **Default Radius**: `rounded-md` (6px) for balanced, modern corners.
-- **Heights & Sizing**:
-  - `xs`: `h-6`, `px-2.5`, `text-xs`
-  - `sm`: `h-8`, `px-3`, `text-sm`
-  - `default`: `h-9`, `px-3`, `text-sm`
-  - `lg`: `h-10`, `px-4`, `text-base`
-- **States**: Hover, Active (`translate-y-px`), Disabled (`opacity-50`, `pointer-events-none`), Focus (`ring-3`, `focus-visible:ring-ring/30`).
+- **Heading 1**: `text-2xl md:text-3xl font-bold tracking-tight text-foreground`
+- **Heading 2**: `text-base md:text-lg font-semibold text-foreground`
+- **Section Label**: `text-xs font-medium uppercase tracking-wider text-muted-foreground`
+- **Body Regular**: `text-sm text-foreground leading-normal`
+- **Body Muted**: `text-xs md:text-sm text-muted-foreground`
+- **Caption / Meta**: `text-[10px] md:text-xs text-muted-foreground`
+- **Code / Monospace**: `font-mono text-xs text-muted-foreground`
 
-### 5.2 Form Inputs
-- Standard height: `h-9`, `rounded-md`, border `border-input`, background `bg-background` or transparent in dark mode.
-- Focus: `focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/30`.
+---
 
-### 5.3 Cards & Surfaces
-- Base class: `bg-card text-card-foreground rounded-lg border border-border`.
-- Nested elements should use smaller radii (e.g. Card `rounded-lg` containing inputs with `rounded-md`).
+## 4. Component Patterns
+
+### 4.1 Buttons
+```tsx
+// Primary CTA (Full Pill)
+<Button className="h-9 px-4 text-sm rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90">
+  Get Started
+  <ArrowRight className="h-3 w-3 ml-1.5" />
+</Button>
+
+// Secondary Outline (Full Pill)
+<Button variant="outline" className="h-8 px-3 text-xs rounded-full border-border/60 hover:bg-accent">
+  View Docs
+</Button>
+
+// Compact Ghost
+<Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs">
+  Cancel
+</Button>
+
+// Action / Copy Icon Button
+<Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground">
+  <Copy className="h-3 w-3" />
+</Button>
+```
+
+### 4.2 Status & Outline Badges
+```tsx
+// Status Badge
+<Badge className="rounded-full px-2 py-0.5 text-[10px] font-medium bg-emerald-500/10 text-emerald-500 border-0">
+  Connected
+</Badge>
+
+// Outline Meta Badge
+<Badge variant="outline" className="rounded-full px-2.5 py-0.5 text-[10px] border-border/60">
+  v1.0.0
+</Badge>
+```
+
+### 4.3 Metric & Analytics Cards
+```tsx
+<div className="rounded-xl border border-border/40 bg-card p-5">
+  <div className="flex items-center gap-2.5 mb-2">
+    <div className="text-muted-foreground"><Activity className="h-5 w-5" /></div>
+    <span className="text-sm font-medium">Metric Title</span>
+  </div>
+  <p className="text-xs text-muted-foreground mb-1">Subcategory</p>
+  <p className="text-3xl font-semibold mb-1 tracking-tight">1,234</p>
+  <p className="text-xs text-muted-foreground mb-3">+12% from last week</p>
+  <div className="h-28 mt-4">
+    {/* Micro Recharts / Sparkline */}
+  </div>
+</div>
+```
+
+### 4.4 Settings & Form Rows (Responsive)
+```tsx
+<div className="rounded-xl border border-border/50 bg-card overflow-hidden">
+  {/* Row Item */}
+  <div className="flex flex-col md:flex-row md:items-center md:justify-between px-4 py-3 border-b border-border/40 gap-2 md:gap-0">
+    <div className="space-y-0.5">
+      <p className="text-sm md:text-xs font-medium">Setting Label</p>
+      <p className="text-xs md:text-[10px] text-muted-foreground">Detailed description of this configuration.</p>
+    </div>
+    <Input className="w-full md:w-64 h-9 md:h-8 text-sm md:text-xs" />
+  </div>
+
+  {/* Footer Bar */}
+  <div className="flex justify-end px-4 py-2.5 md:py-2 bg-muted/20">
+    <Button size="sm" className="h-8 md:h-7 px-4 md:px-3 text-xs">
+      Save changes
+    </Button>
+  </div>
+</div>
+```
+
+### 4.5 Horizontal Tabs (Mobile Anti-Wrap)
+```tsx
+<TabsList className="flex w-full flex-nowrap overflow-x-auto no-scrollbar border-b border-border">
+  <TabsTrigger 
+    value="general" 
+    className="px-3 md:px-4 py-3 text-xs md:text-sm font-medium whitespace-nowrap shrink-0 text-muted-foreground data-[state=active]:text-foreground data-[state=active]:border-b-2 data-[state=active]:border-foreground"
+  >
+    General
+  </TabsTrigger>
+</TabsList>
+```
