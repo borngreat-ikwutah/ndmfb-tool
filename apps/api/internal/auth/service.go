@@ -4,15 +4,25 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/database"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const sessionLifetime = 30 * 24 * time.Hour
+
+var (
+	ErrEmailAlreadyRegistered = errors.New("email is already registered")
+	ErrInvalidCredentials     = errors.New("invalid email or password")
+)
 
 type Service struct {
 	store *database.Store
@@ -59,14 +69,72 @@ func (s *Service) CompleteGoogleSignIn(ctx context.Context, profile GoogleProfil
 	if err != nil {
 		return nil, err
 	}
+	return s.createAuthResponse(ctx, token, user)
+}
+
+func (s *Service) CompleteEmailSignUp(ctx context.Context, name, email, password string) (*models.AuthResponse, error) {
+	if s == nil || s.store == nil {
+		return nil, fmt.Errorf("database is not configured")
+	}
+	name = strings.TrimSpace(name)
+	email = normalizeEmail(email)
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
+	id, err := randomToken(24)
+	if err != nil {
+		return nil, err
+	}
+	user, err := s.store.CreateEmailUser(ctx, id, name, email, string(passwordHash))
+	if err != nil {
+		var pgError *pgconn.PgError
+		if errors.As(err, &pgError) && pgError.Code == "23505" {
+			return nil, ErrEmailAlreadyRegistered
+		}
+		return nil, err
+	}
+	token, err := randomToken(32)
+	if err != nil {
+		return nil, err
+	}
+	return s.createAuthResponse(ctx, token, user)
+}
+
+func (s *Service) CompleteEmailSignIn(ctx context.Context, email, password string) (*models.AuthResponse, error) {
+	if s == nil || s.store == nil {
+		return nil, fmt.Errorf("database is not configured")
+	}
+	user, passwordHash, err := s.store.FindEmailUser(ctx, normalizeEmail(email))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrInvalidCredentials
+		}
+		return nil, err
+	}
+	if passwordHash == "" || bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password)) != nil {
+		return nil, ErrInvalidCredentials
+	}
+	token, err := randomToken(32)
+	if err != nil {
+		return nil, err
+	}
+	return s.createAuthResponse(ctx, token, user)
+}
+
+func (s *Service) createAuthResponse(ctx context.Context, token string, user *models.User) (*models.AuthResponse, error) {
 	expiresAt := time.Now().Add(sessionLifetime)
 	if err := s.store.CreateSession(ctx, token, user.ID, expiresAt); err != nil {
 		return nil, err
 	}
 	return &models.AuthResponse{
 		User:    *user,
-		Session: models.Session{Token: token, ExpiresAt: expiresAt, User: *user},
+		Session: models.Session{ID: token, Token: token, ExpiresAt: expiresAt, User: *user},
 	}, nil
+}
+
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
 }
 
 func GoogleAuthorizationURL(clientID, redirectURL, state string) string {

@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/models"
 )
 
-const sessionCookie = "better-auth.session_token"
+const SessionCookieName = "better-auth.session_token"
 const stateCookie = "better-auth.oauth_state"
 
 type Controller struct {
@@ -54,6 +55,67 @@ func (c *Controller) SignInSocial(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"url": GoogleAuthorizationURL(c.googleID, c.redirectURL, state), "callbackURL": input.CallbackURL})
 }
 
+func (c *Controller) SignUpEmail(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid sign up request")
+		return
+	}
+	if strings.TrimSpace(input.Name) == "" || strings.TrimSpace(input.Email) == "" || len(input.Password) < 8 {
+		writeError(w, http.StatusBadRequest, "name, a valid email, and a password of at least 8 characters are required")
+		return
+	}
+	result, err := c.service.CompleteEmailSignUp(r.Context(), input.Name, input.Email, input.Password)
+	if errors.Is(err, ErrEmailAlreadyRegistered) {
+		writeError(w, http.StatusConflict, "email is already registered")
+		return
+	}
+	if err != nil {
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "database is not configured") {
+			status = http.StatusServiceUnavailable
+		}
+		writeError(w, status, err.Error())
+		return
+	}
+	setSessionCookie(w, r, result.Session)
+	writeJSON(w, http.StatusCreated, result)
+}
+
+func (c *Controller) SignInEmail(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid sign in request")
+		return
+	}
+	if strings.TrimSpace(input.Email) == "" || input.Password == "" {
+		writeError(w, http.StatusBadRequest, "email and password are required")
+		return
+	}
+	result, err := c.service.CompleteEmailSignIn(r.Context(), input.Email, input.Password)
+	if errors.Is(err, ErrInvalidCredentials) {
+		writeError(w, http.StatusUnauthorized, "invalid email or password")
+		return
+	}
+	if err != nil {
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "database is not configured") {
+			status = http.StatusServiceUnavailable
+		}
+		writeError(w, status, err.Error())
+		return
+	}
+	setSessionCookie(w, r, result.Session)
+	writeJSON(w, http.StatusOK, result)
+}
+
 func (c *Controller) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 	stateCookieValue, err := r.Cookie(stateCookie)
 	if err != nil || stateCookieValue.Value == "" || stateCookieValue.Value != r.URL.Query().Get("state") {
@@ -74,9 +136,13 @@ func (c *Controller) GoogleCallback(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Value: result.Session.Token, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: r.TLS != nil, Expires: result.Session.ExpiresAt})
+	setSessionCookie(w, r, result.Session)
 	http.SetCookie(w, &http.Cookie{Name: stateCookie, Value: "", Path: "/", MaxAge: -1})
 	http.Redirect(w, r, c.successURL, http.StatusFound)
+}
+
+func setSessionCookie(w http.ResponseWriter, r *http.Request, session models.Session) {
+	http.SetCookie(w, &http.Cookie{Name: SessionCookieName, Value: session.Token, Path: "/", HttpOnly: true, SameSite: http.SameSiteLaxMode, Secure: r.TLS != nil, Expires: session.ExpiresAt})
 }
 
 func (c *Controller) GetSession(w http.ResponseWriter, r *http.Request) {
@@ -93,15 +159,15 @@ func (c *Controller) GetSession(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) SignOut(w http.ResponseWriter, r *http.Request) {
-	if cookie, err := r.Cookie(sessionCookie); err == nil {
+	if cookie, err := r.Cookie(SessionCookieName); err == nil {
 		_ = c.service.DeleteSession(r.Context(), cookie.Value)
 	}
-	http.SetCookie(w, &http.Cookie{Name: sessionCookie, Value: "", Path: "/", MaxAge: -1, HttpOnly: true})
+	http.SetCookie(w, &http.Cookie{Name: SessionCookieName, Value: "", Path: "/", MaxAge: -1, HttpOnly: true})
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(sessionCookie)
+	cookie, err := r.Cookie(SessionCookieName)
 	if err != nil {
 		writeError(w, http.StatusUnauthorized, "unauthorized")
 		return
@@ -123,7 +189,7 @@ func (c *Controller) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) sessionFromRequest(r *http.Request) (*models.Session, error) {
-	cookie, err := r.Cookie(sessionCookie)
+	cookie, err := r.Cookie(SessionCookieName)
 	if err != nil {
 		return nil, nil
 	}

@@ -94,6 +94,40 @@ func (s *Store) UpsertGoogleUser(ctx context.Context, subject, name, email strin
 	return &user, nil
 }
 
+func (s *Store) CreateEmailUser(ctx context.Context, id, name, email, passwordHash string) (*models.User, error) {
+	var user models.User
+	err := s.pool.QueryRow(ctx, `
+		INSERT INTO "user" (id, name, email, email_verified, password_hash)
+		VALUES ($1, $2, $3, FALSE, $4)
+		RETURNING id, name, email, email_verified, image, created_at, updated_at
+	`, id, name, email, passwordHash).Scan(
+		&user.ID, &user.Name, &user.Email, &user.EmailVerified, &user.Image, &user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create email user: %w", err)
+	}
+	return &user, nil
+}
+
+func (s *Store) FindEmailUser(ctx context.Context, email string) (*models.User, string, error) {
+	var user models.User
+	var passwordHash *string
+	err := s.pool.QueryRow(ctx, `
+		SELECT id, name, email, email_verified, image, created_at, updated_at, password_hash
+		FROM "user"
+		WHERE email = $1
+	`, email).Scan(
+		&user.ID, &user.Name, &user.Email, &user.EmailVerified, &user.Image, &user.CreatedAt, &user.UpdatedAt, &passwordHash,
+	)
+	if err != nil {
+		return nil, "", fmt.Errorf("find email user: %w", err)
+	}
+	if passwordHash == nil {
+		return &user, "", nil
+	}
+	return &user, *passwordHash, nil
+}
+
 func (s *Store) CreateSession(ctx context.Context, token, userID string, expiresAt time.Time) error {
 	_, err := s.pool.Exec(ctx, `INSERT INTO session (id, token, expires_at, user_id) VALUES ($1, $2, $3, $4)`, token, token, expiresAt, userID)
 	if err != nil {

@@ -8,6 +8,7 @@ import (
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/auth"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/controllers"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/database"
+	"github.com/ndmfb/ndmfb-tool/apps/api/internal/notifications"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/routes"
 )
 
@@ -29,9 +30,10 @@ func main() {
 		}
 	}
 
+	authService := auth.NewService(store)
 	server := &http.Server{
 		Addr:    ":" + port,
-		Handler: routes.New(controllers.New(), auth.NewController(auth.NewService(store))),
+		Handler: routes.New(controllers.New(), auth.NewController(authService), notifications.NewController(store, authService)),
 	}
 
 	log.Printf("ndmfb API listening on http://localhost:%s", port)

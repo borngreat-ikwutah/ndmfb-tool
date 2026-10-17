@@ -7,11 +7,12 @@ import (
 
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/auth"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/controllers"
+	"github.com/ndmfb/ndmfb-tool/apps/api/internal/notifications"
 	"github.com/ndmfb/ndmfb-tool/apps/api/internal/routes"
 )
 
 func TestHealthEndpoint(t *testing.T) {
-	handler := routes.New(controllers.New(), auth.NewController(nil))
+	handler := routes.New(controllers.New(), auth.NewController(nil), notifications.NewController(nil, nil))
 
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	res := httptest.NewRecorder()
