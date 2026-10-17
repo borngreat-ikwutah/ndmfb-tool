@@ -6,16 +6,14 @@ import { AuthLayout } from "./auth-layout";
 const copy = {
   "sign-in": {
     title: "Sign in to NDMFB Tool",
-    sub: "Continue with your staff Google account.",
-    button: "Continue with Google",
+    sub: "Sign in with your email and password.",
     switchPrompt: "New to NDMFB?",
     switchLabel: "Create an account",
     switchTo: "/sign-up" as const,
   },
   "sign-up": {
     title: "Create your account",
-    sub: "Sign up with your staff Google account to get started.",
-    button: "Sign up with Google",
+    sub: "Enter your name, email, and a password to get started.",
     switchPrompt: "Already have an account?",
     switchLabel: "Sign in",
     switchTo: "/sign-in" as const,

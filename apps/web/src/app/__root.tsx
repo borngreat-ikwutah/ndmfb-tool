@@ -14,9 +14,11 @@ import { seoConfig } from "../seo";
 import { Toaster } from "~/components/ui/sonner";
 
 import type { QueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import React, { useEffect, useRef } from "react";
 import { toast } from "sonner";
-import { clientEnv } from "~/config/client-env";
+import { API_UNREACHABLE_MESSAGE } from "~/lib/api-client";
+import { checkBackendHealth } from "~/server/health";
 interface MyRouterContext {
   queryClient: QueryClient;
 }
@@ -56,37 +58,32 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 function BackendStatusToast() {
   const hasShownOfflineToast = useRef(false);
 
+  const health = useQuery({
+    queryKey: ["backend-health"],
+    queryFn: () => checkBackendHealth(),
+    retry: false,
+    refetchInterval: (query) => (query.state.error ? 3_000 : false),
+  });
+
   useEffect(() => {
-    let cancelled = false;
-
-    const checkBackend = async () => {
-      try {
-        const response = await fetch(`${clientEnv.VITE_API_URL}/healthz`, {
-          signal: AbortSignal.timeout(5000),
-        });
-        if (!response.ok) throw new Error("Backend unavailable");
-        hasShownOfflineToast.current = false;
-      } catch {
-        if (cancelled || hasShownOfflineToast.current) return;
-        hasShownOfflineToast.current = true;
-        toast.error("Your network is bad", {
-          description: "The backend cannot be reached right now.",
-          action: {
-            label: "Retry",
-            onClick: () => {
-              hasShownOfflineToast.current = false;
-              void checkBackend();
-            },
+    if (health.isSuccess) {
+      hasShownOfflineToast.current = false;
+      return;
+    }
+    if (health.isError && !hasShownOfflineToast.current) {
+      hasShownOfflineToast.current = true;
+      toast.error("Your network is bad", {
+        description: API_UNREACHABLE_MESSAGE,
+        action: {
+          label: "Retry",
+          onClick: () => {
+            hasShownOfflineToast.current = false;
+            void health.refetch();
           },
-        });
-      }
-    };
-
-    void checkBackend();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+        },
+      });
+    }
+  }, [health]);
 
   return null;
 }

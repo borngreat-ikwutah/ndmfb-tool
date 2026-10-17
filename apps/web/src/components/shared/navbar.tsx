@@ -4,6 +4,7 @@ import { LogOut, MenuIcon, UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { getCurrentUser } from "~/server/user";
 import { authClient } from "~/lib/auth-client";
+import { isBackendUnreachable } from "~/lib/api-client";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Button } from "../ui/button";
 import {
@@ -28,11 +29,14 @@ export function Navbar() {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, error } = useQuery({
     queryKey: ["current-user"],
     queryFn: () => getCurrentUser(),
     staleTime: 1000 * 60 * 5,
+    retry: false,
   });
+
+  const isConnecting = !isLoading && isBackendUnreachable(error);
 
   const handleSignOut = async () => {
     try {
@@ -58,7 +62,11 @@ export function Navbar() {
         <div className="hidden md:flex items-center gap-3">
           <ThemeSwitcher />
 
-          {isLoading ? (
+          {isConnecting ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-medium text-amber-500 animate-pulse">
+              Connecting…
+            </span>
+          ) : isLoading ? (
             <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
           ) : user ? (
             <DropdownMenu>
@@ -100,6 +108,11 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         <div className="md:hidden flex items-center gap-2">
+          {isConnecting ? (
+            <span className="flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-medium text-amber-500 animate-pulse">
+              Connecting…
+            </span>
+          ) : null}
           <ThemeSwitcher />
           <Sheet>
             <SheetTrigger asChild>

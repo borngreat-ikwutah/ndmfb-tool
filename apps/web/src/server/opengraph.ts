@@ -14,7 +14,7 @@ export interface OpenGraphData {
  * Must run on server to bypass CORS restrictions.
  */
 export const getOpenGraphFn = createServerFn({ method: "GET" })
-  .inputValidator((data: { url: string }) => data)
+  .validator((data: { url: string }) => data)
   .handler(async ({ data }): Promise<OpenGraphData> => {
     const { url } = data;
 

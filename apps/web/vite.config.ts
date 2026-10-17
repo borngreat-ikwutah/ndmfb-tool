@@ -7,7 +7,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
 export default defineConfig({
-  envDir: path.resolve(__dirname, "../.."),
+  envDir: __dirname,
   server: {
     port: 3000,
   },

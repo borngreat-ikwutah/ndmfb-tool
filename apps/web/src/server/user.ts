@@ -1,20 +1,22 @@
 import { queryOptions } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
+import type { Session, User } from "@ndmfb/contract";
 import { getRequestHeaders } from "@tanstack/react-start/server";
+import { ApiError, apiFetch } from "~/lib/api-client";
 import { updateUserSchema } from "~/lib/validators/user";
 
-export type CurrentUser = { id: string; name: string; email: string; image?: string | null };
-const apiURL = process.env.API_URL || "http://localhost:8080";
+export type CurrentUser = User;
 
 export const getCurrentUser = createServerFn({ method: "GET" }).handler(async () => {
+  const cookie = getRequestHeaders().get("cookie") || "";
   try {
-    const response = await fetch(`${apiURL}/api/auth/get-session`, {
-      headers: { cookie: getRequestHeaders().get("cookie") || "" },
-    });
-    if (!response.ok) return null;
-    return (await response.json()) as CurrentUser;
-  } catch {
-    return null;
+    const session = await apiFetch<Session>("/api/auth/get-session", { cookie });
+    return session.user;
+  } catch (error) {
+    // A reachable API answering "unauthorized" simply means signed out.
+    if (error instanceof ApiError && error.status === 401) return null;
+    // Otherwise (backend unreachable, HTTP 5xx) let the caller handle it.
+    throw error;
   }
 });
 
@@ -30,16 +32,12 @@ export const currentUserOptions = (userId?: string) =>
   });
 
 export const updateUserDetailsFn = createServerFn({ method: "POST" })
-  .inputValidator(updateUserSchema)
+  .validator(updateUserSchema)
   .handler(async ({ data }) => {
-    const response = await fetch(`${apiURL}/api/auth/update-user`, {
+    const cookie = getRequestHeaders().get("cookie") || "";
+    return await apiFetch<CurrentUser>("/api/auth/update-user", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        cookie: getRequestHeaders().get("cookie") || "",
-      },
-      body: JSON.stringify(data),
+      cookie,
+      body: data,
     });
-    if (!response.ok) throw new Error("Unable to update profile");
-    return (await response.json()) as CurrentUser;
   });

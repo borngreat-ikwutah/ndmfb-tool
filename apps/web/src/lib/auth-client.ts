@@ -1,20 +1,10 @@
 import { clientEnv } from "~/config/client-env";
+import type { AuthResponse, EmailSignUpRequest } from "@ndmfb/contract";
 
 const apiURL = clientEnv.VITE_API_URL;
 
 export const authClient = {
   signIn: {
-    social: async ({ provider, callbackURL }: { provider: string; callbackURL: string }) => {
-      const response = await fetch(`${apiURL}/api/auth/sign-in/social`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ callbackURL }),
-      });
-      if (!response.ok) throw new Error("Authentication is not available");
-      const result = (await response.json()) as { url: string };
-      window.location.assign(result.url);
-    },
     email: async ({ email, password }: { email: string; password: string }) => {
       const response = await fetch(`${apiURL}/api/auth/sign-in/email`, {
         method: "POST",
@@ -22,31 +12,30 @@ export const authClient = {
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-      if (!response.ok) {
-        const message = await response.text().catch(() => "");
-        throw new Error(message || "Email sign-in failed");
-      }
-      const result = (await response.json().catch(() => null)) as { url?: string } | null;
-      window.location.assign(result?.url ?? "/");
+      await handleAuthResponse(response, "Email sign in failed");
     },
   },
   signUp: {
-    email: async ({ email, password, name }: { email: string; password: string; name?: string }) => {
+    email: async ({ email, password, name }: { email: string; password: string; name: string }) => {
       const response = await fetch(`${apiURL}/api/auth/sign-up/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify({ email, password, name } satisfies EmailSignUpRequest),
       });
-      if (!response.ok) {
-        const message = await response.text().catch(() => "");
-        throw new Error(message || "Email sign-up failed");
-      }
-      const result = (await response.json().catch(() => null)) as { url?: string } | null;
-      window.location.assign(result?.url ?? "/");
+      await handleAuthResponse(response, "Email sign up failed");
     },
   },
   signOut: async () => {
     await fetch(`${apiURL}/api/auth/sign-out`, { method: "POST", credentials: "include" });
   },
 };
+
+async function handleAuthResponse(response: Response, fallback: string): Promise<AuthResponse> {
+  const body = (await response.json().catch(() => null)) as AuthResponse | { message?: string } | null;
+  if (!response.ok) {
+    throw new Error(body && "message" in body && body.message ? body.message : fallback);
+  }
+  window.location.assign("/");
+  return body as AuthResponse;
+}

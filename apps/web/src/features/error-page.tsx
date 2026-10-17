@@ -14,6 +14,10 @@ import {
   EmptyContent,
 } from "~/components/ui/empty";
 import { Button } from "~/components/ui/button";
+import {
+  API_UNREACHABLE_MESSAGE,
+  isApiFailure,
+} from "~/lib/api-client";
 
 interface ErrorPageProps {
   error?: Error | unknown;
@@ -22,6 +26,8 @@ interface ErrorPageProps {
   showRefresh?: boolean;
   showGoBack?: boolean;
   showHomeButton?: boolean;
+  /** Show the API-unreachable hint, for errors raised by the Go API. */
+  showApiHint?: boolean;
   customActions?: React.ReactNode;
 }
 
@@ -32,6 +38,7 @@ export function ErrorPage({
   showRefresh = true,
   showGoBack = true,
   showHomeButton = true,
+  showApiHint = false,
   customActions,
 }: ErrorPageProps) {
   const router = useRouter();
@@ -84,6 +91,12 @@ export function ErrorPage({
               </div>
             )}
 
+            {showApiHint ? (
+              <p role="alert" className="text-sm font-medium text-amber-500">
+                {API_UNREACHABLE_MESSAGE}
+              </p>
+            ) : null}
+
             <p className="text-muted-foreground text-sm">
               We apologize for the inconvenience. Our team has been notified and
               is working to resolve this issue.
@@ -133,7 +146,7 @@ export function ErrorPage({
 
 // Pre-configured error components for common scenarios
 export function DefaultErrorPage({ error }: { error?: Error | unknown }) {
-  return <ErrorPage error={error} />;
+  return <ErrorPage error={error} showApiHint={isApiFailure(error)} />;
 }
 
 export function NetworkErrorPage() {
@@ -158,6 +171,7 @@ export function ServerErrorPage() {
     <ErrorPage
       title="Server Error"
       description="Our servers are experiencing issues. Please try again in a few minutes."
+      showApiHint
       showGoBack={false}
     />
   );
