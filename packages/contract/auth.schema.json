@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ndmfb.local/contracts/auth.schema.json",
+  "$defs": {
+    "user": {
+      "type": "object",
+      "required": ["id", "name", "email", "emailVerified", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "emailVerified": { "type": "boolean" },
+        "image": { "type": ["string", "null"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "session": {
+      "type": "object",
+      "required": ["id", "expiresAt", "user"],
+      "properties": {
+        "id": { "type": "string" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "user": { "$ref": "#/$defs/user" }
+      },
+      "additionalProperties": false
+    },
+    "authResponse": {
+      "type": "object",
+      "required": ["user", "session"],
+      "properties": {
+        "user": { "$ref": "#/$defs/user" },
+        "session": { "$ref": "#/$defs/session" }
+      },
+      "additionalProperties": false
+    },
+    "emailCredentials": {
+      "type": "object",
+      "required": ["email", "password"],
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "password": { "type": "string", "minLength": 8 }
+      },
+      "additionalProperties": false
+    },
+    "emailSignUpRequest": {
+      "allOf": [
+        { "$ref": "#/$defs/emailCredentials" },
+        {
+          "type": "object",
+          "required": ["name"],
+          "properties": { "name": { "type": "string", "minLength": 1, "maxLength": 80 } }
+        }
+      ]
+    },
+    "errorResponse": {
+      "type": "object",
+      "required": ["error", "message", "status"],
+      "properties": {
+        "error": { "type": "string" },
+        "message": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

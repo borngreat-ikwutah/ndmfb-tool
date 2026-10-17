@@ -1,13 +1,13 @@
 {
   "name": "ndmfb-tool",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "dev": "bun run web:dev",
     "web:dev": "cd apps/web && bun run dev",
     "web:build": "cd apps/web && bun run build",
     "web:check": "cd apps/web && bun run check",
-    "api:dev": "set -a; [ ! -f .env ] || . .env; set +a; cd apps/api && go run ./cmd/api",
+    "api:dev": "set -a; [ ! -f apps/api/.env ] || . apps/api/.env; set +a; bash scripts/api-dev.sh",
     "api:test": "cd apps/api && go test ./...",
     "check": "bun run web:check && bun run api:test",
     "prepare": "git config core.hooksPath .githooks"

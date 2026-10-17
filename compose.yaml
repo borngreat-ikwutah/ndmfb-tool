@@ -1,12 +1,12 @@
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: wagemore-db
+    container_name: ndmfb-db
     restart: always
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: wagemore-db
+      POSTGRES_DB: ndmfb-db
     ports:
       - "5434:5432"
     volumes:

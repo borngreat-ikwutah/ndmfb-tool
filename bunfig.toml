@@ -1,0 +1,4 @@
+[install]
+# TanStack Start and Vite resolve React and other peers from the repo root,
+# so dependencies must be hoisted rather than isolated per workspace.
+linker = "hoisted"
